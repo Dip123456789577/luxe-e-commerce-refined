@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Application structure
+
+- Keep storefront pages in individual TanStack routes and share catalog, cart, and wishlist state through browser-safe modules, so navigation stays addressable and shopping state stays consistent.
