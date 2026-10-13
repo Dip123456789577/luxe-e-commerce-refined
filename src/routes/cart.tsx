@@ -1,7 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PageScaffold } from "@/components/page-scaffold";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Minus, Plus, Trash2, ArrowRight, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { StoreLayout } from "@/components/storefront";
+import { cartKey, money, products, useStorefront } from "@/lib/storefront";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({ meta: [{ title: "Your shopping bag | LUXE" }, { name: "description", content: "Review your LUXE shopping bag." }, { property: "og:title", content: "Your shopping bag | LUXE" }, { property: "og:description", content: "Review your LUXE shopping bag." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
-  component: () => <PageScaffold title="Your bag" note="Your considered finds, all in one place." />,
+  component: CartPage,
 });
+
+function CartPage() {
+  const { cart, updateQuantity, removeFromCart } = useStorefront();
+  const subtotal = cart.reduce((sum, item) => sum + (products.find((p) => p.id === item.productId)?.price ?? 0) * item.quantity, 0);
+  return <StoreLayout><section className="page-width min-h-[45vh] pb-16 pt-10 sm:pb-24 sm:pt-14">
+    <div className="border-b border-border pb-7"><p className="mb-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">A good choice</p><h1 className="font-serif text-5xl sm:text-6xl">Your bag <span className="align-middle font-sans text-sm text-muted-foreground">({cart.reduce((sum, item) => sum + item.quantity, 0)})</span></h1></div>
+    {cart.length === 0 ? <div className="py-20 text-center"><h2 className="font-serif text-4xl">Your bag is taking a little break.</h2><p className="mt-3 text-sm text-muted-foreground">Find something lovely to bring home.</p><Button asChild className="mt-7 h-11 rounded-none px-7 text-[10px] uppercase tracking-[0.14em]"><Link to="/shop">Explore the collection <ArrowRight className="size-4" /></Link></Button></div> : <div className="grid gap-10 pt-8 lg:grid-cols-[minmax(0,1fr)_350px] lg:gap-16">
+      <div>{cart.map((item) => { const product = products.find((p) => p.id === item.productId); if (!product) return null; const key = cartKey(item); return <article key={key} className="grid grid-cols-[92px_minmax(0,1fr)] gap-4 border-b border-border py-5 first:pt-0 sm:grid-cols-[120px_minmax(0,1fr)_auto] sm:gap-6"><Link to="/product/$slug" params={{ slug: product.id }} className="row-span-2 block aspect-[4/5] overflow-hidden bg-muted sm:row-span-1"><img src={product.image} alt={product.name} className="size-full object-cover" /></Link><div className="min-w-0"><Link to="/product/$slug" params={{ slug: product.id }} className="font-serif text-2xl hover:underline">{product.name}</Link><p className="mt-2 text-xs text-muted-foreground">{item.color} · {item.size}</p><p className="mt-2 text-sm">{money(product.price)}</p><div className="mt-4 flex items-center border border-input sm:w-fit"><Button variant="ghost" size="icon" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(key, Math.max(1, item.quantity - 1))}><Minus className="size-3.5" /></Button><span className="w-8 text-center text-xs" aria-live="polite">{item.quantity}</span><Button variant="ghost" size="icon" aria-label={`Increase ${product.name} quantity`} onClick={() => updateQuantity(key, item.quantity + 1)}><Plus className="size-3.5" /></Button></div></div><div className="col-start-2 flex items-start justify-between gap-2 sm:col-start-3 sm:row-start-1 sm:flex-col sm:items-end"><p className="text-sm">{money(product.price * item.quantity)}</p><Button variant="ghost" size="icon" aria-label={`Remove ${product.name} from bag`} onClick={() => removeFromCart(key)}><Trash2 className="size-4" /></Button></div></article>; })}</div>
+      <aside className="h-fit border-t border-border pt-5 lg:sticky lg:top-8"><h2 className="font-serif text-3xl">Order summary</h2><div className="mt-5 flex justify-between py-3 text-sm"><span>Subtotal</span><span>{money(subtotal)}</span></div><div className="flex justify-between border-b border-border pb-5 text-sm"><span>Shipping</span><span>{subtotal >= 150 ? "Complimentary" : "Calculated at checkout"}</span></div><div className="flex justify-between py-5 text-base font-medium"><span>Estimated total</span><span>{money(subtotal)}</span></div><Button asChild className="h-12 w-full rounded-none text-[10px] uppercase tracking-[0.15em]"><Link to="/checkout">Continue to checkout <ArrowRight className="size-4" /></Link></Button><p className="mt-4 flex items-center justify-center gap-2 text-[10px] text-muted-foreground"><ShieldCheck className="size-3.5" /> Secure checkout · No payment collected in this demo</p><Link to="/shop" className="mt-6 block text-center text-[10px] uppercase tracking-[0.14em] underline underline-offset-4">Continue exploring</Link></aside>
+    </div>}
+  </section></StoreLayout>;
+}
